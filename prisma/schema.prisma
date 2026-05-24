@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+
+  tasks         Task[]
+  studySessions StudySession[]
+  courses       Course[]
+  exams         Exam[]
+}
+
+model Task {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  completed Boolean @default(false)
+
+  userId Int
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model StudySession {
+  id Int @id @default(autoincrement())
+
+  subject String
+
+  topic String?
+
+  hours Int
+
+  minutes Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  userId Int
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Course {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  credits Int @default(3)
+
+  midterm Int
+
+  final Int
+
+  average Float
+
+  letterGrade String
+
+  userId Int
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Exam {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  examDate DateTime
+
+  userId Int
+
+  user User @relation(fields: [userId], references: [id])
+}

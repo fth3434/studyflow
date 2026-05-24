@@ -1,0 +1,28 @@
+Tablo Adı;Alan Adı;Veri Tipi;Kısıtlamalar;Varsayılan Değer;Açıklama
+User;id;Int;Primary Key, Auto Increment;-;Kullanıcının benzersiz kimliği
+User;name;String;Not Null;-;Kullanıcının ad ve soyad bilgisi
+User;email;String;Unique, Not Null;-;Kullanıcının sisteme giriş yaptığı e-posta adresi
+User;password;String;Not Null;-;Kullanıcının şifrelenmiş (hash) parolası
+Task;id;Int;Primary Key, Auto Increment;-;Görevin benzersiz kimliği
+Task;title;String;Not Null;-;Görev başlığı / tanımı
+Task;completed;Boolean;Not Null;false;Görevin tamamlanıp tamamlanmadığı durumu
+Task;userId;Int;Foreign Key (User.id);-;Görevi oluşturan kullanıcının kimliği
+StudySession;id;Int;Primary Key, Auto Increment;-;Çalışma oturumunun benzersiz kimliği
+StudySession;subject;String;Not Null;-;Çalışılan dersin adı
+StudySession;topic;String;Nullable;-;Çalışılan alt konu veya açıklama (İsteğe bağlı)
+StudySession;hours;Int;Not Null;-;Çalışma süresi (Saat kısmı)
+StudySession;minutes;Int;Not Null;0;Çalışma süresi (Dakika kısmı)
+StudySession;createdAt;DateTime;Not Null;now();Çalışmanın sisteme kaydedildiği tarih ve saat
+StudySession;userId;Int;Foreign Key (User.id);-;Çalışmayı kaydeden kullanıcının kimliği
+Course;id;Int;Primary Key, Auto Increment;-;Ders notu kaydının benzersiz kimliği
+Course;name;String;Not Null;-;Dersin adı ve eğitim dönemi bilgisi
+Course;credits;Int;Not Null;3;Üniversite için ders kredisi, lise için haftalık ders saati
+Course;midterm;Int;Not Null;-;Vize notu veya 1. Sınav notu (0-100 arası)
+Course;final;Int;Not Null;-;Final notu veya 2. Sınav notu (0-100 arası)
+Course;average;Float;Not Null;-;Hesaplanan dönem veya ağırlıklı not ortalaması
+Course;letterGrade;String;Not Null;-;Hesaplanan harf notu (AA, BA vb.) veya geçme durumu (Geçti/Kaldı)
+Course;userId;Int;Foreign Key (User.id);-;Notu ekleyen kullanıcının kimliği
+Exam;id;Int;Primary Key, Auto Increment;-;Sınav kaydının benzersiz kimliği
+Exam;title;String;Not Null;-;Sınavın adı
+Exam;examDate;DateTime;Not Null;-;Sınavın gerçekleşeceği tarih ve saat
+Exam;userId;Int;Foreign Key (User.id);-;Sınavı ekleyen kullanıcının kimliği

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyFlow - Giriş Yap</title>
+    <link rel="stylesheet" href="auth.css">
+</head>
+
+<body class="auth-body">
+
+    <div class="auth-card">
+        <h1>Giriş Yap 🚀</h1>
+
+        <div class="input-group">
+            <span class="input-icon">📧</span>
+            <input id="email" type="email" placeholder="E-posta adresi">
+        </div>
+
+        <div class="input-group">
+            <span class="input-icon">🔑</span>
+            <input id="password" type="password" placeholder="Şifre">
+        </div>
+
+        <button onclick="login()" class="auth-btn">
+            Sisteme Gir
+        </button>
+
+        <div class="auth-links">
+            Hesabın yok mu? <a href="/register.html">Kayıt Ol</a>
+        </div>
+    </div>
+
+    <script>
+        function checkLoginFields(email, password) {
+            if (!email || !password) {
+                alert("Email ve şifre boş olamaz!");
+                return false;
+            }
+            return true;
+        }
+
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const btn = document.querySelector(".auth-btn");
+
+            if (!checkLoginFields(email, password)) return;
+
+            btn.innerText = "Giriş yapılıyor...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch("/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.user || response.ok) {
+                    window.location.href = "/dashboard.html";
+                } else {
+                    alert(data.error || "Giriş başarısız ❌");
+                }
+            } catch (error) {
+                alert("Sunucuya bağlanırken hata oluştu.");
+            } finally {
+                btn.innerText = "Sisteme Gir";
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

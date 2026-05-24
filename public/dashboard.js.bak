@@ -1,0 +1,1040 @@
+let chart;
+
+async function checkAuth() {
+    const res = await fetch("/me");
+    const data = await res.json();
+    if (!data || data.message === "Giriş yapılmamış") {
+        window.location.href = "/login.html";
+    }
+}
+
+let dashboardData = { completedTasks: 0, pendingTasks: 0, totalTasks: 0, completionRate: 0 };
+
+async function loadDashboard() {
+    const response = await fetch("/dashboard-data");
+    dashboardData = await response.json();
+    document.getElementById("totalTasks").innerText = dashboardData.totalTasks;
+    document.getElementById("completedTasks").innerText = dashboardData.completedTasks;
+    document.getElementById("pendingTasks").innerText = dashboardData.pendingTasks;
+    document.getElementById("completionRate").innerText = "%" + dashboardData.completionRate;
+
+    const dashSec = document.getElementById("dashboardSection");
+    if (dashSec && dashSec.style.display !== "none") {
+        renderChart(dashboardData.completedTasks, dashboardData.pendingTasks);
+    }
+}
+
+async function createTask() {
+    const title = document.getElementById("taskInput").value;
+    if (title === "") return;
+    await fetch("/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title })
+    });
+    showNotification("Görev eklendi 🚀");
+    document.getElementById("taskInput").value = "";
+    loadDashboard();
+    loadTasks();
+}
+
+async function addStudySession() {
+    const subject = document.getElementById("subjectInput").value;
+    const topic = document.getElementById("topicInput").value;
+    const hours = document.getElementById("hoursInput").value || 0;
+    const minutes = document.getElementById("minutesInput").value || 0;
+
+    if (subject === "" || (hours == 0 && minutes == 0) || Number(hours) < 0 || Number(minutes) < 0) {
+        showNotification("Lütfen geçerli bir ders ve pozitif süre girin!");
+        return;
+    }
+
+    await fetch("/study-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, topic, hours: Number(hours), minutes: Number(minutes) })
+    });
+    showNotification("Çalışma kaydedildi ⏱️");
+    document.getElementById("subjectInput").value = "";
+    document.getElementById("topicInput").value = "";
+    document.getElementById("hoursInput").value = "";
+    document.getElementById("minutesInput").value = "";
+    loadStudySessions();
+}
+
+function renderChart(completed, pending) {
+    const ctx = document.getElementById("taskChart");
+    if (!ctx) return;
+
+    if (chart) {
+        chart.destroy();
+    }
+    chart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+            labels: [getText('chart_completed'), getText('chart_pending')],
+            datasets: [{ data: [completed, pending] }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+async function loadTasks() {
+    const response = await fetch("/tasks");
+    const tasks = await response.json();
+    const taskList = document.getElementById("taskList");
+    if (!taskList) return;
+
+    taskList.innerHTML = "";
+    tasks.forEach(task => {
+        const li = document.createElement("li");
+        li.classList.add("task-item");
+        if (task.completed) {
+            li.classList.add("completed");
+        }
+        li.innerHTML = `
+            <span>${task.title}</span>
+            <div class="task-buttons">
+                <button onclick="toggleTask(${task.id})" title="Tamamlandı İşaretle">✔</button>
+                <button onclick="editTask(${task.id}, '${task.title.replace(/'/g, "\\'")}')" title="Düzenle">✏️</button>
+                <button onclick="deleteTask(${task.id})" title="Sil">❌</button>
+            </div>
+        `;
+        taskList.appendChild(li);
+    });
+}
+
+async function toggleTask(id) {
+    await fetch(`/tasks/${id}/toggle`, { method: "PATCH" });
+    loadTasks();
+    loadDashboard();
+}
+
+async function editTask(id, currentTitle) {
+    const newTitle = prompt("Görevi güncelle:", currentTitle);
+    if (newTitle !== null && newTitle.trim() !== "" && newTitle !== currentTitle) {
+        await fetch(`/tasks/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: newTitle.trim() })
+        });
+        showNotification("Görev güncellendi ✏️");
+        loadTasks();
+    }
+}
+
+async function deleteTask(id) {
+    await fetch(`/tasks/${id}`, { method: "DELETE" });
+    loadTasks();
+    loadDashboard();
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("dark-mode");
+    if (document.body.classList.contains("dark-mode")) {
+        localStorage.setItem("theme", "dark");
+    } else {
+        localStorage.setItem("theme", "light");
+    }
+}
+
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "dark") {
+    document.body.classList.add("dark-mode");
+}
+
+async function addExam() {
+    const title = document.getElementById("examTitle").value;
+    const examDate = document.getElementById("examDate").value;
+    if (title === "" || examDate === "") return;
+
+    await fetch("/exams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, examDate })
+    });
+    showNotification("Sınav eklendi 📅");
+    document.getElementById("examTitle").value = "";
+    document.getElementById("examDate").value = "";
+    loadExams();
+}
+
+let examInterval;
+
+async function loadExams() {
+    const response = await fetch("/exams");
+    const exams = await response.json();
+    const examList = document.getElementById("examList");
+    if (!examList) return;
+
+    if (examInterval) clearInterval(examInterval);
+    examList.innerHTML = "";
+
+    const nowTime = new Date().getTime();
+    const upcoming = [];
+    const past = [];
+
+    exams.forEach(ex => {
+        if (new Date(ex.examDate).getTime() < nowTime) past.push(ex);
+        else upcoming.push(ex);
+    });
+
+    const sortedExams = [...upcoming, ...past];
+
+    sortedExams.forEach(exam => {
+        const li = document.createElement("li");
+        li.classList.add("task-item");
+
+        const examDateStr = new Date(exam.examDate).toLocaleString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        li.innerHTML = `
+            <div class="exam-item" style="display:flex; width: 100%; justify-content: space-between; align-items: center;">
+                <div class="exam-info" style="flex: 2;">
+                    <span class="exam-title">${exam.title}</span>
+                    <span class="exam-date">${examDateStr}</span>
+                </div>
+                <div class="exam-countdown" id="countdown-${exam.id}" style="flex: 3; display: flex; justify-content: center;">
+                    <div class="time-box"><span>--</span><small>Gün</small></div>
+                    <div class="time-box"><span>--</span><small>Saat</small></div>
+                    <div class="time-box"><span>--</span><small>Dk</small></div>
+                    <div class="time-box"><span>--</span><small>Sn</small></div>
+                </div>
+                <div class="task-buttons" style="flex: 1; display:flex; gap:5px; justify-content: flex-end;">
+                    <button onclick="editExam(${exam.id}, '${exam.title.replace(/'/g, "\\'")}', '${exam.examDate}')" title="Düzenle">✏️</button>
+                    <button onclick="deleteExam(${exam.id})" title="Sil">❌</button>
+                </div>
+            </div>
+        `;
+        examList.appendChild(li);
+    });
+
+    function updateCountdowns() {
+        const now = new Date().getTime();
+        exams.forEach(exam => {
+            const el = document.getElementById(`countdown-${exam.id}`);
+            if (!el) return;
+
+            const examTime = new Date(exam.examDate).getTime();
+            const distance = examTime - now;
+
+            if (distance < 0) {
+                el.innerHTML = `<div class="time-box" style="background: #10b981; min-width: 120px;"><span>${getText('exam_passed')}</span></div>`;
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            el.innerHTML = `
+                <div class="time-box"><span>${days.toString().padStart(2, '0')}</span><small>${getText('time_day')}</small></div>
+                <div class="time-box"><span>${hours.toString().padStart(2, '0')}</span><small>${getText('time_hour')}</small></div>
+                <div class="time-box"><span>${minutes.toString().padStart(2, '0')}</span><small>${getText('time_min')}</small></div>
+                <div class="time-box"><span>${seconds.toString().padStart(2, '0')}</span><small>${getText('time_sec')}</small></div>
+            `;
+        });
+    }
+
+    updateCountdowns();
+    examInterval = setInterval(updateCountdowns, 1000);
+}
+
+async function deleteExam(id) {
+    if(confirm("Sınavı silmek istediğinize emin misiniz?")) {
+        await fetch(`/exams/${id}`, { method: "DELETE" });
+        showNotification("Sınav silindi 🗑️");
+        loadExams();
+    }
+}
+
+async function editExam(id, currentTitle, currentDate) {
+    const newTitle = prompt("Sınav adını güncelle:", currentTitle);
+    if (!newTitle) return;
+    
+    // Provide a simple prompt for date update since datetime-local in prompt is hard
+    // For a better UX, one could use a custom modal, but this works minimally.
+    const newDateStr = prompt("Yeni tarihi girin (YYYY-MM-DDTHH:mm formatında, iptal için boş bırakın):", currentDate.slice(0, 16));
+    const newDate = newDateStr ? newDateStr : currentDate;
+
+    await fetch(`/exams/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle, examDate: newDate })
+    });
+    
+    showNotification("Sınav güncellendi ✏️");
+    loadExams();
+}
+
+function showNotification(message) {
+    const box = document.getElementById("notification");
+    box.innerText = message;
+    box.classList.add("show");
+    setTimeout(() => {
+        box.classList.remove("show");
+    }, 3000);
+}
+
+async function logout() {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login.html";
+}
+
+async function loadUser() {
+    const res = await fetch("/me");
+    const user = await res.json();
+    const welcomeText = document.getElementById("welcomeText");
+    if (welcomeText) {
+        if (user && user.name) {
+            welcomeText.innerText = `${getText('welcome_msg')} ${user.name}`;
+            const profName = document.getElementById("profileName");
+            const profEmail = document.getElementById("profileEmail");
+            if(profName) profName.innerText = user.name;
+            if(profEmail) profEmail.innerText = user.email;
+        } else {
+            welcomeText.innerText = getText('welcome_msg');
+        }
+    }
+}
+
+async function updatePassword() {
+    const newPassword = document.getElementById("newPassword").value;
+    if (!newPassword) {
+        showNotification("Lütfen yeni şifre girin.");
+        return;
+    }
+    try {
+        const res = await fetch("/update-password", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newPassword })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showNotification(data.message || "Şifre güncellendi");
+            document.getElementById("newPassword").value = "";
+        } else {
+            showNotification(data.error || "Şifre güncellenemedi");
+        }
+    } catch (e) {
+        showNotification("Hata oluştu");
+    }
+}
+
+function showSection(section) {
+    document.getElementById("dashboardSection").style.display = "none";
+    document.getElementById("tasksSection").style.display = "none";
+    document.getElementById("studySection").style.display = "none";
+    document.getElementById("examSection").style.display = "none";
+    const profileSec = document.getElementById("profileSection");
+    if(profileSec) profileSec.style.display = "none";
+
+    const title = document.getElementById("pageTitle");
+
+    if (section === "dashboard") {
+        document.getElementById("dashboardSection").style.display = "block";
+        if (title) title.innerText = "Dashboard";
+        renderChart(dashboardData.completedTasks, dashboardData.pendingTasks);
+    } else if (section === "tasks") {
+        document.getElementById("tasksSection").style.display = "block";
+        if (title) title.innerText = "Tasks";
+    } else if (section === "study") {
+        document.getElementById("studySection").style.display = "block";
+        if (title) title.innerText = "Study Sessions";
+    } else if (section === "exams" || section === "courses") {
+        document.getElementById("examSection").style.display = "block";
+        if (title) title.innerText = "Courses / Exams";
+    } else if (section === "profile") {
+        if(profileSec) profileSec.style.display = "block";
+        if (title) title.innerText = "Profil";
+    }
+}
+
+const trQuotes = [
+    "Hiçkimse başarı merdivenlerini elleri cebinde çıkmamıştır. 🧗‍♂️",
+    "Başlamak için mükemmel olmak zorunda değilsin, ama mükemmel olmak için başlamak zorundasın. 🚀",
+    "Gelecek, bugünden hazırlananlara aittir. 🔮",
+    "Eğitim, dünyayı değiştirmek için kullanabileceğiniz en güçlü silahtır. 🌍",
+    "Zorluklar, yeteneklerinizi ortaya çıkaran fırsatlardır. 💎",
+    "Mazeretler sizi sadece olduğunuz yerde tutar. Harekete geç! 🏃‍♂️",
+    "Başarı, her gün tekrarlanan küçük çabaların toplamıdır. 💧",
+    "Daha iyi bir yarın için, bugün dünden daha fazla çalış. 📈",
+    "Büyük hayaller kur, küçük adımlarla başla. 🎯",
+    "Yorgun olduğunda değil, işin bittiğinde dur. 🛑"
+];
+
+const enQuotes = [
+    "No one has climbed the ladder of success with their hands in their pockets. 🧗‍♂️",
+    "You don't have to be perfect to start, but you have to start to be perfect. 🚀",
+    "The future belongs to those who prepare for it today. 🔮",
+    "Education is the most powerful weapon which you can use to change the world. 🌍",
+    "Difficulties are opportunities to reveal your abilities. 💎",
+    "Excuses only keep you where you are. Take action! 🏃‍♂️",
+    "Success is the sum of small efforts, repeated day in and day out. 💧",
+    "For a better tomorrow, work harder today than you did yesterday. 📈",
+    "Dream big, start with small steps. 🎯",
+    "Don't stop when you're tired, stop when you're done. 🛑"
+];
+
+function changeQuote() {
+    const quoteEl = document.getElementById("motivationalQuote");
+    if (!quoteEl) return;
+
+    const quotesList = currentLang === "en" ? enQuotes : trQuotes;
+
+    let currentQuote = quoteEl.innerText;
+    let newQuote = currentQuote;
+    while (newQuote === currentQuote) {
+        newQuote = quotesList[Math.floor(Math.random() * quotesList.length)];
+    }
+
+    quoteEl.style.opacity = 0;
+    setTimeout(() => {
+        quoteEl.innerText = newQuote;
+        quoteEl.style.opacity = 1;
+    }, 300);
+}
+
+checkAuth();
+loadUser();
+loadDashboard();
+loadTasks();
+loadExams();
+loadStudySessions();
+loadCourses();
+changeQuote();
+updateCalculatorUI();
+
+// Pomodoro Timer Logic
+let timerInterval;
+let timeLeft = 45 * 60;
+let isWorking = true;
+let isTimerRunning = false;
+
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+function updateTimerDisplay() {
+    const display = document.getElementById("timerDisplay");
+    if (display) display.innerText = formatTime(timeLeft);
+}
+
+function updateTimerStatus(text, color) {
+    const status = document.getElementById("timerStatus");
+    if (status) {
+        status.innerText = text;
+        status.style.color = color;
+    }
+}
+
+function updatePomodoroTheme() {
+    const container = document.getElementById("pomodoroContainer");
+    if (!container) return;
+
+    if (isTimerRunning) {
+        if (isWorking) {
+            container.classList.add("work-mode");
+            container.classList.remove("break-mode");
+        } else {
+            container.classList.add("break-mode");
+            container.classList.remove("work-mode");
+        }
+    } else {
+        container.classList.remove("work-mode", "break-mode");
+    }
+}
+
+function startTimer() {
+    if (isTimerRunning) return;
+
+    isTimerRunning = true;
+    updatePomodoroTheme();
+    updateTimerDisplay();
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            
+            // Audio Alert
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                oscillator.type = "sine";
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                oscillator.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.4);
+            } catch(e) {
+                console.log("Audio not supported or blocked");
+            }
+            
+            setTimeout(() => { alert("Zaman doldu! (Time's up!)"); }, 100);
+
+            const workMins = parseInt(document.getElementById("workTime").value) || 45;
+            const breakMins = parseInt(document.getElementById("breakTime").value) || 15;
+
+            if (isWorking) {
+                showNotification("Çalışma süreniz bitti, şimdi mola zamanı! ☕");
+                isWorking = false;
+                timeLeft = breakMins * 60;
+                updateTimerStatus("Mola Zamanı", "#10b981");
+            } else {
+                showNotification("Mola bitti, çalışmaya geri dön! 🚀");
+                isWorking = true;
+                timeLeft = workMins * 60;
+                updateTimerStatus("Çalışma Zamanı", "#4f46e5");
+            }
+            updateTimerDisplay();
+            updatePomodoroTheme();
+        }
+    }, 1000);
+}
+
+function pauseTimer() {
+    clearInterval(timerInterval);
+    isTimerRunning = false;
+    updatePomodoroTheme();
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    isTimerRunning = false;
+    isWorking = true;
+    const workMins = parseInt(document.getElementById("workTime").value) || 45;
+    timeLeft = workMins * 60;
+    updateTimerStatus("Çalışma Zamanı", "#4f46e5");
+    updateTimerDisplay();
+    updatePomodoroTheme();
+}
+
+// Listen to input changes to update timer if not running
+const workInput = document.getElementById('workTime');
+if (workInput) {
+    workInput.addEventListener('input', () => {
+        if (!isTimerRunning && isWorking) {
+            timeLeft = (parseInt(workInput.value) || 45) * 60;
+            updateTimerDisplay();
+        }
+    });
+}
+
+async function loadStudySessions() {
+    const response = await fetch("/study-sessions");
+    const sessions = await response.json();
+    const studyList = document.getElementById("studyList");
+    if (!studyList) return;
+
+    studyList.innerHTML = "";
+    sessions.forEach(session => {
+        const li = document.createElement("li");
+        li.classList.add("task-item");
+
+        let topicHtml = session.topic ? `<br><small style="color: #6b7280;">${getText('topic_prefix')} ${session.topic}</small>` : '';
+        let durationHtml = "";
+        if (session.hours > 0) durationHtml += `${session.hours} ${getText('study_hour')} `;
+        if (session.minutes > 0) durationHtml += `${session.minutes} ${getText('study_min')}`;
+        if (durationHtml === "") durationHtml = `0 ${getText('study_min')}`;
+
+        li.innerHTML = `
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                <div style="flex: 2; text-align: left;">
+                    <strong>${session.subject}</strong>${topicHtml}
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <span class="session-duration" style="font-weight: 600;">${durationHtml.trim()}</span>
+                </div>
+                <div style="flex: 1; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                    <span style="color: #6b7280; font-size: 14px;">${new Date(session.createdAt).toLocaleDateString('tr-TR')}</span>
+                    <button onclick="deleteStudySession(${session.id})" style="background: none; border: none; cursor: pointer; color: #ef4444; padding: 5px;" title="Sil">❌</button>
+                </div>
+            </div>
+        `;
+        studyList.appendChild(li);
+    });
+}
+
+async function deleteStudySession(id) {
+    if (confirm("Bu çalışmayı silmek istediğinize emin misiniz?")) {
+        await fetch(`/study-sessions/${id}`, { method: "DELETE" });
+        showNotification("Çalışma silindi 🗑️");
+        loadStudySessions();
+    }
+}
+
+const gradePoints = {
+    "AA": 4.0,
+    "BA": 3.5,
+    "BB": 3.0,
+    "CB": 2.5,
+    "CC": 2.0,
+    "DC": 1.5,
+    "FF": 0.0
+};
+
+// GANO CALCULATOR LOGIC
+function updateCalculatorUI() {
+    const level = document.getElementById("educationLevel").value;
+    const semesterSelect = document.getElementById("semesterSelect");
+    const gpaLabel = document.getElementById("gpaLabel");
+
+    semesterSelect.innerHTML = "";
+    if (level === "uni") {
+        semesterSelect.innerHTML = `
+            <option value="Güz">${getText('sem_fall')}</option>
+            <option value="Bahar">${getText('sem_spring')}</option>
+            <option value="Yaz">${getText('sem_summer')}</option>
+        `;
+        gpaLabel.innerText = getText('term_gpa');
+    } else {
+        semesterSelect.innerHTML = `
+            <option value="1. Dönem">${getText('sem_1')}</option>
+            <option value="2. Dönem">${getText('sem_2')}</option>
+        `;
+        gpaLabel.innerText = getText('term_gpa');
+    }
+
+    generateCourseInputs();
+    loadCourses();
+}
+
+function generateCourseInputs() {
+    const container = document.getElementById("calculatorInputs");
+    if (!container) return;
+    const count = parseInt(document.getElementById("courseCount").value) || 5;
+    const level = document.getElementById("educationLevel").value;
+
+    container.innerHTML = "";
+
+    for (let i = 1; i <= count; i++) {
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.gap = "10px";
+        row.style.marginBottom = "10px";
+
+        let inputsHtml = "";
+        if (level === "uni") {
+            inputsHtml = `
+                <input type="text" id="calcName_${i}" placeholder="${i}. ${getText('calc_course_name')}" style="flex: 2; min-width: 120px; margin: 0;">
+                <input type="number" id="calcCredits_${i}" placeholder="${getText('calc_credit')}" min="1" max="10" style="flex: 1; min-width: 60px; margin: 0;">
+                <input type="number" id="calcMidterm_${i}" placeholder="${getText('calc_midterm')}" min="0" max="100" style="flex: 1; min-width: 60px; margin: 0;">
+                <input type="number" id="calcFinal_${i}" placeholder="${getText('calc_final')}" min="0" max="100" style="flex: 1; min-width: 60px; margin: 0;">
+                <div id="calcRes_${i}" style="width: 50px; font-weight: bold; text-align: center; line-height: 38px;">-</div>
+            `;
+        } else {
+            inputsHtml = `
+                <input type="text" id="calcName_${i}" placeholder="${i}. ${getText('calc_course_name')}" style="flex: 2; min-width: 120px; margin: 0;">
+                <input type="number" id="calcCredits_${i}" placeholder="${getText('calc_hour')}" min="1" max="15" style="flex: 1; min-width: 80px; margin: 0;">
+                <input type="number" id="calcMidterm_${i}" placeholder="${getText('calc_exam1')}" min="0" max="100" style="flex: 1; min-width: 60px; margin: 0;">
+                <input type="number" id="calcFinal_${i}" placeholder="${getText('calc_exam2')}" min="0" max="100" style="flex: 1; min-width: 60px; margin: 0;">
+                <div id="calcRes_${i}" style="width: 50px; font-weight: bold; text-align: center; line-height: 38px;">-</div>
+            `;
+        }
+
+        row.innerHTML = inputsHtml;
+        container.appendChild(row);
+    }
+}
+
+function calculateGPA() {
+    const count = parseInt(document.getElementById("courseCount").value) || 5;
+    const level = document.getElementById("educationLevel").value;
+
+    let totalPoints = 0;
+    let totalCredits = 0;
+
+    for (let i = 1; i <= count; i++) {
+        const credits = parseFloat(document.getElementById(`calcCredits_${i}`).value);
+        const midterm = parseFloat(document.getElementById(`calcMidterm_${i}`).value);
+        const final = parseFloat(document.getElementById(`calcFinal_${i}`).value);
+        const resEl = document.getElementById(`calcRes_${i}`);
+
+        if (isNaN(credits) || isNaN(midterm) || isNaN(final)) continue;
+
+        if (level === "uni") {
+            const avg = (midterm * 0.4) + (final * 0.6);
+            let letter = "FF";
+            if (avg >= 90) letter = "AA"; else if (avg >= 85) letter = "BA"; else if (avg >= 80) letter = "BB"; else if (avg >= 70) letter = "CB"; else if (avg >= 60) letter = "CC"; else if (avg >= 50) letter = "DC";
+
+            resEl.innerText = letter;
+            resEl.style.color = letter === "FF" ? "red" : "green";
+
+            totalPoints += (gradePoints[letter] || 0) * credits;
+            totalCredits += credits;
+        } else {
+            const avg = (midterm + final) / 2;
+            resEl.innerText = avg.toFixed(1);
+            resEl.style.color = avg < 50 ? "red" : "green";
+
+            totalPoints += avg * credits;
+            totalCredits += credits;
+        }
+    }
+
+    const ganoResult = document.getElementById("ganoResult");
+    if (totalCredits > 0) {
+        ganoResult.innerText = (totalPoints / totalCredits).toFixed(2);
+    } else {
+        ganoResult.innerText = "0.00";
+    }
+}
+
+function resetGPA() {
+    generateCourseInputs();
+    document.getElementById("ganoResult").innerText = "0.00";
+}
+
+async function saveGPA() {
+    const count = parseInt(document.getElementById("courseCount").value) || 5;
+    const level = document.getElementById("educationLevel").value;
+    const semester = document.getElementById("semesterSelect").value;
+
+    let savedCount = 0;
+    for (let i = 1; i <= count; i++) {
+        const name = document.getElementById(`calcName_${i}`).value;
+        const credits = document.getElementById(`calcCredits_${i}`).value;
+        const midterm = document.getElementById(`calcMidterm_${i}`).value;
+        const final = document.getElementById(`calcFinal_${i}`).value;
+
+        if (!name || !credits || midterm === "" || final === "") continue;
+
+        let customAvg = undefined;
+        let customLetter = undefined;
+
+        if (level === "highschool") {
+            customAvg = (Number(midterm) + Number(final)) / 2;
+            customLetter = customAvg < 50 ? "Kaldı" : "Geçti";
+        }
+
+        await fetch("/courses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: name + ` (${semester})` + (level === "highschool" ? " (Lise/OO)" : ""),
+                credits: Number(credits),
+                midterm: Number(midterm),
+                final: Number(final),
+                average: customAvg,
+                letterGrade: customLetter
+            })
+        });
+        savedCount++;
+    }
+
+    if (savedCount > 0) {
+        showNotification(`${savedCount} ders başarıyla kaydedildi 🎓`);
+        loadCourses();
+    } else {
+        showNotification("Kaydedilecek geçerli bir ders bulunamadı! Lütfen tüm alanları doldurun.");
+    }
+}
+
+async function loadCourses() {
+    const response = await fetch("/courses");
+    const courses = await response.json();
+    const courseList = document.getElementById("courseList");
+    if (!courseList) return;
+
+    const levelEl = document.getElementById("educationLevel");
+    const level = levelEl ? levelEl.value : "uni";
+
+    courseList.innerHTML = "";
+
+    let totalCreditPoints = 0;
+    let totalCredits = 0;
+
+    courses.forEach(course => {
+        const isHsCourse = course.name.includes("(Lise/OO)");
+
+        if (level === "uni" && isHsCourse) return;
+        if (level === "highschool" && !isHsCourse) return;
+
+        const li = document.createElement("li");
+        li.classList.add("task-item");
+
+        let gradeColor = course.letterGrade === "FF" || course.letterGrade === "Kaldı" ? "#ef4444" : "#10b981";
+        if (course.letterGrade.includes("D") || course.letterGrade.includes("C")) gradeColor = "#f59e0b";
+
+        const displayName = course.name.replace(" (Lise/OO)", "");
+        const creditsLabel = level === "uni" ? getText('calc_credit') : getText('calc_hour');
+        const midLabel = level === "uni" ? getText('calc_midterm') : getText('calc_exam1');
+        const finLabel = level === "uni" ? getText('calc_final') : getText('calc_exam2');
+
+        li.innerHTML = `
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                <div style="display: flex; flex-direction: column; flex: 3;">
+                    <span style="font-weight: 600;">${displayName} <small style="color:#6b7280;">(${course.credits} ${creditsLabel})</small></span>
+                    <small style="color: #6b7280;">${midLabel}: ${course.midterm} | ${finLabel}: ${course.final} | Ort: ${course.average}</small>
+                </div>
+                <div style="background: ${gradeColor}; color: white; padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 18px; text-align: center; margin-right: 15px;">
+                    ${course.letterGrade}
+                </div>
+                <div class="task-buttons" style="display:flex; gap:5px; flex: 1; justify-content: flex-end;">
+                    <button onclick="editCourse(${course.id}, '${displayName}', ${course.credits}, ${course.midterm}, ${course.final})" title="Düzenle">✏️</button>
+                    <button onclick="deleteCourse(${course.id})" title="Sil">❌</button>
+                </div>
+            </div>
+        `;
+        courseList.appendChild(li);
+
+        if (level === "uni") {
+            if (gradePoints[course.letterGrade] !== undefined) {
+                totalCreditPoints += gradePoints[course.letterGrade] * course.credits;
+                totalCredits += course.credits;
+            }
+        } else {
+            totalCreditPoints += course.average * course.credits;
+            totalCredits += course.credits;
+        }
+    });
+
+    const ganoResult = document.getElementById("ganoResult");
+    if (ganoResult) {
+        if (totalCredits > 0) {
+            ganoResult.innerText = (totalCreditPoints / totalCredits).toFixed(2);
+        } else {
+            ganoResult.innerText = "0.00";
+        }
+    }
+}
+
+async function deleteCourse(id) {
+    if(confirm("Dersi silmek istediğinize emin misiniz?")) {
+        await fetch(`/courses/${id}`, { method: "DELETE" });
+        showNotification("Ders silindi 🗑️");
+        loadCourses();
+    }
+}
+
+async function editCourse(id, name, credits, midterm, final) {
+    const newName = prompt("Dersin adı:", name);
+    if (!newName) return;
+    const newCredits = prompt("Kredi/Saat:", credits);
+    const newMidterm = prompt("Vize/1.Sınav:", midterm);
+    const newFinal = prompt("Final/2.Sınav:", final);
+
+    if(newCredits !== null && newMidterm !== null && newFinal !== null) {
+        await fetch(`/courses/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                name: newName, 
+                credits: Number(newCredits), 
+                midterm: Number(newMidterm), 
+                final: Number(newFinal) 
+            })
+        });
+        showNotification("Ders güncellendi ✏️");
+        loadCourses();
+    }
+}
+
+const dict = {
+    "tr": {
+        "dashboard_menu": "Dashboard",
+        "tasks_menu": "Görevler",
+        "study_menu": "Çalışma Oturumları",
+        "courses_menu": "Dersler",
+        "profile_menu": "Profil",
+        "logout_btn": "Çıkış Yap",
+        "theme_btn": "🌙 Tema Değiştir",
+        "quote_hint": "Yeni bir söz için tıkla ✨",
+        "total_tasks": "Toplam Görev",
+        "completed": "Tamamlanan",
+        "pending": "Bekleyen",
+        "success_rate": "Başarı Oranı",
+        "task_analysis": "Görev Analizi 📈",
+        "add_task_title": "Görev Ekle",
+        "task_placeholder": "Görev gir",
+        "add_btn": "Ekle",
+        "my_tasks": "Görevlerim 📋",
+        "pomodoro_title": "Pomodoro Zamanlayıcı ⏱️",
+        "work_min": "Çalışma (dk)",
+        "break_min": "Mola (dk)",
+        "work_time_label": "Çalışma Zamanı",
+        "start_btn": "▶ Başlat",
+        "pause_btn": "⏸ Duraklat",
+        "stop_btn": "⏹ Bitir",
+        "add_study_hours": "Çalışma Saati Ekle",
+        "course_placeholder": "Ders",
+        "topic_placeholder": "Konu / Açıklama (İsteğe bağlı)",
+        "hour_placeholder": "Saat",
+        "minute_placeholder": "Dakika",
+        "save_btn": "Kaydet",
+        "past_studies": "Geçmiş Çalışmalarım 📚",
+        "gpa_calc_title": "Not Hesapla & Ortalamalar 🎓",
+        "education_level": "Eğitim Kademesi:",
+        "semester": "Dönem:",
+        "course_count": "Ders Sayısı:",
+        "calc_btn": "Hesapla",
+        "reset_btn": "Sıfırla",
+        "term_gpa": "Dönem Sonu GANO",
+        "my_grades": "Derslerim ve Harf Notlarım 📚",
+        "add_exam_title": "Sınav Ekle 📅",
+        "exam_name_placeholder": "Sınav adı",
+        "upcoming_exams": "Yaklaşan Sınavlar 🔔",
+        "profile_title": "Kullanıcı Profili 👤",
+        "profile_name_label": "İsim:",
+        "profile_email_label": "E-posta:",
+        "profile_change_pwd": "Şifre Değiştir",
+        "update_pwd_btn": "Şifreyi Güncelle",
+        "new_pwd_placeholder": "Yeni Şifre",
+        "welcome_msg": "Hoş geldin 👋",
+        "chart_completed": "Tamamlanan",
+        "chart_pending": "Bekleyen",
+        "calc_course_name": "Ders Adı",
+        "calc_credit": "Kredi",
+        "calc_midterm": "Vize",
+        "calc_final": "Final",
+        "calc_hour": "Ders Saati",
+        "calc_exam1": "1. Sınav",
+        "calc_exam2": "2. Sınav",
+        "exam_passed": "Sınav Geçti 🏁",
+        "time_day": "Gün",
+        "time_hour": "Saat",
+        "time_min": "Dk",
+        "time_sec": "Sn",
+        "study_hour": "Saat",
+        "study_min": "Dk",
+        "topic_prefix": "Konu:",
+        "gpa_uni": "Üniversite (GANO/Harf Notu)",
+        "gpa_highschool": "Lise / Ortaokul",
+        "sem_fall": "Güz Dönemi",
+        "sem_spring": "Bahar Dönemi",
+        "sem_summer": "Yaz Okulu",
+        "sem_1": "1. Dönem",
+        "sem_2": "2. Dönem"
+    },
+    "en": {
+        "dashboard_menu": "Dashboard",
+        "tasks_menu": "Tasks",
+        "study_menu": "Study Sessions",
+        "courses_menu": "Courses",
+        "profile_menu": "Profile",
+        "logout_btn": "Logout",
+        "theme_btn": "🌙 Toggle Theme",
+        "quote_hint": "Click for a new quote ✨",
+        "total_tasks": "Total Tasks",
+        "completed": "Completed",
+        "pending": "Pending",
+        "success_rate": "Success Rate",
+        "task_analysis": "Task Analysis 📈",
+        "add_task_title": "Add Task",
+        "task_placeholder": "Enter a task",
+        "add_btn": "Add",
+        "my_tasks": "My Tasks 📋",
+        "pomodoro_title": "Pomodoro Timer ⏱️",
+        "work_min": "Work (min)",
+        "break_min": "Break (min)",
+        "work_time_label": "Work Time",
+        "start_btn": "▶ Start",
+        "pause_btn": "⏸ Pause",
+        "stop_btn": "⏹ Stop",
+        "add_study_hours": "Add Study Hours",
+        "course_placeholder": "Course",
+        "topic_placeholder": "Topic / Description (Optional)",
+        "hour_placeholder": "Hour",
+        "minute_placeholder": "Minute",
+        "save_btn": "Save",
+        "past_studies": "Past Studies 📚",
+        "gpa_calc_title": "Calculate GPA & Averages 🎓",
+        "education_level": "Education Level:",
+        "semester": "Semester:",
+        "course_count": "Course Count:",
+        "calc_btn": "Calculate",
+        "reset_btn": "Reset",
+        "term_gpa": "Term GPA",
+        "my_grades": "My Courses and Grades 📚",
+        "add_exam_title": "Add Exam 📅",
+        "exam_name_placeholder": "Exam name",
+        "upcoming_exams": "Upcoming Exams 🔔",
+        "profile_title": "User Profile 👤",
+        "profile_name_label": "Name:",
+        "profile_email_label": "Email:",
+        "profile_change_pwd": "Change Password",
+        "update_pwd_btn": "Update Password",
+        "new_pwd_placeholder": "New Password",
+        "welcome_msg": "Welcome 👋",
+        "chart_completed": "Completed",
+        "chart_pending": "Pending",
+        "calc_course_name": "Course Name",
+        "calc_credit": "Credit",
+        "calc_midterm": "Midterm",
+        "calc_final": "Final",
+        "calc_hour": "Course Hour",
+        "calc_exam1": "Exam 1",
+        "calc_exam2": "Exam 2",
+        "exam_passed": "Exam Passed 🏁",
+        "time_day": "Day",
+        "time_hour": "Hr",
+        "time_min": "Min",
+        "time_sec": "Sec",
+        "study_hour": "Hr",
+        "study_min": "Min",
+        "topic_prefix": "Topic:",
+        "gpa_uni": "University (GPA/Letter Grade)",
+        "gpa_highschool": "High School / Middle School",
+        "sem_fall": "Fall Semester",
+        "sem_spring": "Spring Semester",
+        "sem_summer": "Summer School",
+        "sem_1": "1st Term",
+        "sem_2": "2nd Term"
+    }
+};
+
+let currentLang = localStorage.getItem("lang") || "tr";
+
+function getText(key) {
+    return dict[currentLang] && dict[currentLang][key] ? dict[currentLang][key] : key;
+}
+
+function changeLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem("lang", lang);
+    const sel = document.getElementById("langSelect");
+    if(sel) sel.value = lang;
+    
+    document.querySelectorAll("[data-lang]").forEach(el => {
+        const key = el.getAttribute("data-lang");
+        if(dict[lang][key]) {
+            el.innerText = dict[lang][key];
+        }
+    });
+
+    document.querySelectorAll("[data-lang-placeholder]").forEach(el => {
+        const key = el.getAttribute("data-lang-placeholder");
+        if(dict[lang][key]) {
+            el.placeholder = dict[lang][key];
+        }
+    });
+
+    // Re-render dynamic parts
+    loadUser();
+    if(chart) renderChart(dashboardData.completedTasks, dashboardData.pendingTasks);
+    updateCalculatorUI();
+    loadExams();
+    loadStudySessions();
+    loadCourses();
+    changeQuote();
+    
+    // Update education levels manually since they are <option>
+    const edLvl = document.getElementById("educationLevel");
+    if(edLvl && edLvl.options.length > 1) {
+        edLvl.options[0].text = getText('gpa_uni');
+        edLvl.options[1].text = getText('gpa_highschool');
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    changeLanguage(currentLang);
+});

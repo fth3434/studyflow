@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyFlow - Kayıt Ol</title>
+    <link rel="stylesheet" href="auth.css">
+</head>
+
+<body class="auth-body">
+
+    <div class="auth-card">
+        <h1>Kayıt Ol 🎓</h1>
+
+        <div class="input-group">
+            <span class="input-icon">👤</span>
+            <input id="name" type="text" placeholder="Ad Soyad">
+        </div>
+
+        <div class="input-group">
+            <span class="input-icon">📧</span>
+            <input id="email" type="email" placeholder="E-posta adresi">
+        </div>
+
+        <div class="input-group">
+            <span class="input-icon">🔑</span>
+            <input id="password" type="password" placeholder="Şifre belirle">
+        </div>
+
+        <button onclick="register()" class="auth-btn">
+            Hesap Oluştur
+        </button>
+
+        <div class="auth-links">
+            Zaten hesabın var mı? <a href="/login.html">Giriş Yap</a>
+        </div>
+    </div>
+
+    <script>
+        async function register() {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const btn = document.querySelector(".auth-btn");
+
+            if (!name || !email || !password) {
+                alert("Lütfen tüm alanları doldurun!");
+                return;
+            }
+
+            btn.innerText = "Hesap oluşturuluyor...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch("/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.");
+                    window.location.href = "/login.html";
+                } else {
+                    alert(data.error || "Kayıt başarısız oldu.");
+                }
+            } catch (e) {
+                alert("Sunucuya bağlanılamadı.");
+            } finally {
+                btn.innerText = "Hesap Oluştur";
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>StudyFlow Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div id="notification" class="notification"></div>
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>StudyFlow 🚀</h2>
+            <ul>
+                <li onclick="showSection('dashboard')">Ana Sayfa</li>
+                <li onclick="showSection('tasks')">Görevler</li>
+                <li onclick="showSection('study')">Çalışma Oturumları</li>
+                <li onclick="showSection('exams')">Dersler ve Sınavlar</li>
+                <li onclick="showSection('profile')">Profil</li>
+            </ul>
+            <button class="logout-btn" onclick="logout()" data-lang="logout_btn">Çıkış Yap</button>
+        </aside>
+        <main class="main">
+            <div class="header">
+                <h1 id="pageTitle">Ana Sayfa</h1>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span id="welcomeText"></span>
+
+                    <button onclick="toggleTheme()" data-lang="theme_btn">🌙 Tema Değiştir</button>
+                </div>
+            </div>
+
+            <div class="quote-container" onclick="changeQuote()">
+                <p id="motivationalQuote" class="motivational-quote">Yükleniyor...</p>
+                <small class="quote-hint" data-lang="quote_hint">Yeni bir söz için tıkla ✨</small>
+            </div>
+
+            <div id="dashboardSection" class="content-section">
+                <div class="cards">
+                    <div class="card">
+                        <h3 data-lang="total_tasks">Toplam Görev</h3>
+                        <p id="totalTasks">0</p>
+                    </div>
+                    <div class="card">
+                        <h3 data-lang="completed">Tamamlanan</h3>
+                        <p id="completedTasks">0</p>
+                    </div>
+                    <div class="card">
+                        <h3 data-lang="pending">Bekleyen</h3>
+                        <p id="pendingTasks">0</p>
+                    </div>
+                    <div class="card">
+                        <h3 data-lang="success_rate">Başarı Oranı</h3>
+                        <p id="completionRate">%0</p>
+                    </div>
+                </div>
+                <div class="section">
+                    <h2 data-lang="task_analysis">Görev Analizi 📈</h2>
+                    <canvas id="taskChart"></canvas>
+                </div>
+            </div>
+
+            <div id="tasksSection" class="content-section" style="display: none;">
+                <div class="section">
+                    <h2 data-lang="add_task_title">Görev Ekle</h2>
+                    <input id="taskInput" placeholder="Görev gir" data-lang-placeholder="task_placeholder">
+                    <button onclick="createTask()" data-lang="add_btn">Ekle</button>
+                </div>
+                <div class="section">
+                    <h2 data-lang="my_tasks">Görevlerim 📋</h2>
+                    <ul id="taskList"></ul>
+                </div>
+            </div>
+
+            <div id="studySection" class="content-section" style="display: none;">
+                <div class="section" id="pomodoroContainer"
+                    style="text-align: center; transition: background-color 0.5s ease; border-radius: 20px;">
+                    <h2 id="pomodoroTitle" data-lang="pomodoro_title">Pomodoro Zamanlayıcı ⏱️</h2>
+                    <div class="timer-settings">
+                        <input id="workTime" type="number" min="1" value="45" placeholder="Çalışma (dk)" data-lang-placeholder="work_min"
+                            title="Çalışma Süresi (Dakika)">
+                        <input id="breakTime" type="number" min="1" value="15" placeholder="Mola (dk)" data-lang-placeholder="break_min"
+                            title="Mola Süresi (Dakika)">
+                    </div>
+                    <div class="timer-display" id="timerDisplay">45:00</div>
+                    <p id="timerStatus" data-lang="work_time_label" style="font-weight: 600; color: #4f46e5; margin-bottom: 20px; font-size: 18px;">
+                        Çalışma Zamanı</p>
+                    <div class="timer-controls">
+                        <button onclick="startTimer()" style="background: #10b981;" data-lang="start_btn">▶ Başlat</button>
+                        <button onclick="pauseTimer()" style="background: #f59e0b;" data-lang="pause_btn">⏸ Duraklat</button>
+                        <button onclick="stopTimer()" style="background: #ef4444;" data-lang="stop_btn">⏹ Bitir</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 data-lang="add_study_hours">Çalışma Saati Ekle</h2>
+                    <input id="subjectInput" placeholder="Ders" data-lang-placeholder="course_placeholder">
+                    <input id="topicInput" placeholder="Konu / Açıklama (İsteğe bağlı)" data-lang-placeholder="topic_placeholder">
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;">
+                        <input id="hoursInput" type="number" min="0" placeholder="Saat" data-lang-placeholder="hour_placeholder"
+                            style="width: 120px; margin-right: 0;">
+                        <input id="minutesInput" type="number" min="0" max="59" placeholder="Dakika" data-lang-placeholder="minute_placeholder"
+                            style="width: 120px; margin-right: 0;">
+                    </div>
+                    <button onclick="addStudySession()" data-lang="save_btn">Kaydet</button>
+                </div>
+
+                <div class="section">
+                    <h2 data-lang="past_studies">Geçmiş Çalışmalarım 📚</h2>
+                    <ul id="studyList"></ul>
+                </div>
+            </div>
+
+            <div id="examSection" class="content-section" style="display: none;">
+                <div class="section">
+                    <h2 data-lang="gpa_calc_title">Not Hesapla & Ortalamalar 🎓</h2>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-weight: bold; margin-right: 10px;" data-lang="education_level">Eğitim Kademesi:</label>
+                        <select id="educationLevel" onchange="updateCalculatorUI()"
+                            style="padding: 8px; border-radius: 8px;">
+                            <option value="uni">Üniversite (GANO/Harf Notu)</option>
+                            <option value="highschool">Lise / Ortaokul</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; font-size: 14px; margin-bottom: 5px;" data-lang="semester">Dönem:</label>
+                            <select id="semesterSelect" style="padding: 8px; border-radius: 8px;">
+                                <!-- Options populated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 14px; margin-bottom: 5px;" data-lang="course_count">Ders Sayısı:</label>
+                            <input type="number" id="courseCount" min="1" max="15" value="5"
+                                style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;"
+                                onchange="generateCourseInputs()">
+                        </div>
+                    </div>
+
+                    <div id="calculatorInputs"
+                        style="margin-bottom: 20px; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                        <!-- Dynamic inputs will be generated here -->
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button onclick="calculateGPA()" style="background: #10b981;" data-lang="calc_btn">Hesapla</button>
+                        <button onclick="saveGPA()" style="background: #4f46e5;" data-lang="save_btn">Kaydet</button>
+                        <button onclick="resetGPA()" style="background: #ef4444;" data-lang="reset_btn">Sıfırla</button>
+                    </div>
+
+                    <div class="gano-display"
+                        style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #e0e7ff, #c7d2fe); border-radius: 12px; text-align: center; border: 2px solid #818cf8; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <h3 style="margin: 0; color: #3730a3; font-size: 24px;"><span id="gpaLabel" data-lang="term_gpa">Dönem Sonu
+                                GANO</span>: <span id="ganoResult" style="font-weight: 800; color: #312e81;">0.00</span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 data-lang="my_grades">Derslerim ve Harf Notlarım 📚</h2>
+                    <ul id="courseList"></ul>
+                </div>
+
+                <div class="section">
+                    <h2 data-lang="add_exam_title">Sınav Ekle 📅</h2>
+                    <input id="examTitle" placeholder="Sınav adı" data-lang-placeholder="exam_name_placeholder">
+                    <input id="examDate" type="datetime-local">
+                    <button onclick="addExam()" data-lang="save_btn">Kaydet</button>
+                </div>
+                <div class="section">
+                    <h2 data-lang="upcoming_exams">Yaklaşan Sınavlar 🔔</h2>
+                    <ul id="examList"></ul>
+                </div>
+            </div>
+
+            <div id="profileSection" class="content-section" style="display: none;">
+                <div class="section">
+                    <h2 data-lang="profile_title">Kullanıcı Profili 👤</h2>
+                    <p><strong data-lang="profile_name_label">İsim:</strong> <span id="profileName">Yükleniyor...</span></p>
+                    <p><strong data-lang="profile_email_label">E-posta:</strong> <span id="profileEmail">Yükleniyor...</span></p>
+                    <hr style="margin: 20px 0; border: 1px solid #eee;">
+                    <h3 data-lang="profile_change_pwd">Şifre Değiştir</h3>
+                    <input type="password" id="newPassword" placeholder="Yeni Şifre" data-lang-placeholder="new_pwd_placeholder">
+                    <button onclick="updatePassword()" data-lang="update_pwd_btn">Şifreyi Güncelle</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
