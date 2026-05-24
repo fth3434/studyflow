@@ -16,12 +16,12 @@ app.use(session({
 }))
 
 // ROUTES
-const authRoutes = require("./routes/auth.routes")
-const taskRoutes = require("./routes/task.routes")
-const dashboardRoutes = require("./routes/dashboard.routes")
-const studyRoutes = require("./routes/study.routes")
-const gpaRoutes = require("./routes/gpa.routes")
-const examRoutes = require("./routes/exam.routes")
+const authRoutes = require("./src/routes/auth.routes")
+const taskRoutes = require("./src/routes/task.routes")
+const dashboardRoutes = require("./src/routes/dashboard.routes")
+const studyRoutes = require("./src/routes/study.routes")
+const gpaRoutes = require("./src/routes/gpa.routes")
+const examRoutes = require("./src/routes/exam.routes")
 
 // API ROUTES (daha temiz yapı)
 app.use(authRoutes)

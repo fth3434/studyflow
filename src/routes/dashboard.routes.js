@@ -1,12 +1,12 @@
 const express = require("express")
 const protect =
-    require("../middleware/auth.middleware")
+    require("../src/middleware/auth.middleware")
 
 const router = express.Router()
 
 const {
     getDashboard
-} = require("../controllers/dashboard.controller")
+} = require("../src/controllers/dashboard.controller")
 
 router.get(
     "/dashboard-data",
