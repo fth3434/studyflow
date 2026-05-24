@@ -2,8 +2,8 @@ const express = require("express")
 const app = express()
 
 const path = require("path")
-const prisma = require("./prisma")
-
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const session = require("express-session")
 
 // MIDDLEWARE
