@@ -82,6 +82,11 @@ app.get("/me", (req, res) => {
 })
 
 // SERVER START
-app.listen(3000, () => {
-    console.log("Server started on http://localhost:3000")
-})
+// Eski app.listen kısmını bununla değiştiriyoruz:
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`Sunucu ${PORT} portunda çalışıyor...`));
+}
+
+// Vercel'in bu dosyayı çalıştırabilmesi için en alta ekle:
+module.exports = app;
