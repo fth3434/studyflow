@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "prisma generate && prisma db push",
+    "build": "prisma generate",
     "start": "node index.js"
   },
   "keywords": [],
