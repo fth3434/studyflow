@@ -6,13 +6,23 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const session = require("express-session")
 
+const { PrismaSessionStore } = require('@quixo3/prisma-session-store');
+
 // MIDDLEWARE
 app.use(express.json())
 
 app.use(session({
     secret: "studyflowsecret",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    store: new PrismaSessionStore(
+      prisma,
+      {
+        checkPeriod: 2 * 60 * 1000,  // ms
+        dbRecordIdIsSessionId: true,
+        dbRecordIdFunction: undefined,
+      }
+    )
 }))
 
 // ROUTES
@@ -85,7 +95,7 @@ app.get("/me", (req, res) => {
 // Eski app.listen kısmını bununla değiştiriyoruz:
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`Sunucu ${PORT} portunda çalışıyor...`));
+    app.listen(PORT, () => console.log(`Sunucu çalışıyor: http://localhost:${PORT}`));
 }
 
 // Vercel'in bu dosyayı çalıştırabilmesi için en alta ekle:

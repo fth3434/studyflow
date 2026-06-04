@@ -60,8 +60,8 @@ studyflow/
 ├── src/                     # Backend API Kaynak Kodları
 │   ├── controllers/         # Gelen istekleri işleyen kontrolcüler (Gpa, Task, Study)
 │   ├── routes/              # Express yönlendiricileri (Router)
-│   ├── middleware/          # Güvenlik ve Auth katmanları
-│   └── app.js               # Sunucu başlangıç dosyası
+│   └── middleware/          # Güvenlik ve Auth katmanları
+├── index.js                 # Sunucu başlangıç dosyası
 ├── .env                     # Çevresel değişkenler (Veritabanı URL'i)
 └── README.md
 \`\`\`
@@ -98,9 +98,9 @@ Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları i
 
 5.  **Uygulamayı Başlatın:**
     \`\`\`bash
-    node src/app.js
+    node index.js
     \`\`\`
-    Tarayıcınızda `http://localhost:3000` adresine giderek asistanınızı kullanmaya başlayabilirsiniz!
+    Terminalde beliren `http://localhost:5000` (veya ilgili port) linkine tıklayarak asistanınızı kullanmaya başlayabilirsiniz!
 
 ---
 

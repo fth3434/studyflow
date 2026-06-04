@@ -1,5 +1,5 @@
 const express = require("express")
-const protect = require("../src/middleware/auth.middleware")
+const protect = require("../middleware/auth.middleware")
 const router = express.Router()
 
 const {
@@ -12,7 +12,7 @@ const {
 
     deleteStudySession
 
-} = require("../src/controllers/study.controller")
+} = require("../controllers/study.controller")
 
 router.post(
     "/study-sessions",

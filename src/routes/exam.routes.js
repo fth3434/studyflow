@@ -1,7 +1,7 @@
 const express = require("express")
 
 const router = express.Router()
-const protect = require("../src/middleware/auth.middleware")
+const protect = require("../middleware/auth.middleware")
 
 const {
 
@@ -11,7 +11,7 @@ const {
     updateExam,
     deleteExam
 
-} = require("../src/controllers/exam.controller")
+} = require("../controllers/exam.controller")
 
 router.post("/exams", protect, createExam)
 
