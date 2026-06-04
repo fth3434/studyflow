@@ -64,9 +64,9 @@ const login = async (req, res) => {
                 user.password
             )
 
-        if (!user) {
+        if (!isMatch) {
             return res.status(401).json({
-                error: "Kullanıcı bulunamadı"
+                error: "Şifre hatalı"
             })
         }
 
