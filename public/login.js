@@ -24,7 +24,7 @@ async function login() {
     if (!isValid) return
 
     const response =
-        await fetch("http://localhost:3000/login", {
+        await fetch("/login", {
 
             method: "POST",
 
