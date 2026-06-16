@@ -47,7 +47,6 @@ async function login() {
             "/dashboard.html"
 
     } else {
-
-        alert("Login başarısız ❌")
+        alert("Login başarısız ❌\nDetay: " + (data.details || data.error || "Bilinmeyen sunucu hatası"));
     }
 }

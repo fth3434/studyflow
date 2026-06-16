@@ -66,7 +66,7 @@
                     alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.");
                     window.location.href = "/login.html";
                 } else {
-                    alert(data.error || "Kayıt başarısız oldu.");
+                    alert((data.error || "Kayıt başarısız oldu.") + "\nDetay: " + (data.details || ""));
                 }
             } catch (e) {
                 alert("Sunucuya bağlanılamadı.");

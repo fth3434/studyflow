@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt")
+const bcrypt = require("bcryptjs")
 const prisma = require("../prisma")
 
 const register = async (req, res) => {
@@ -32,7 +32,8 @@ const register = async (req, res) => {
         console.log(error)
 
         res.status(500).json({
-            error: "Kayıt başarısız"
+            error: "Kayıt başarısız",
+            details: error.message
         })
     }
 }
@@ -82,7 +83,8 @@ const login = async (req, res) => {
         console.log(error)
 
         res.status(500).json({
-            error: "Login başarısız"
+            error: "Login başarısız",
+            details: error.message
         })
     }
 
