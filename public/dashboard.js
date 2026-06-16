@@ -191,18 +191,18 @@ async function loadExams() {
         const examDateStr = new Date(exam.examDate).toLocaleString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
         li.innerHTML = `
-            <div class="exam-item" style="display:flex; width: 100%; justify-content: space-between; align-items: center;">
-                <div class="exam-info" style="flex: 2;">
+            <div class="exam-item">
+                <div class="exam-info">
                     <span class="exam-title">${exam.title}</span>
                     <span class="exam-date">${examDateStr}</span>
                 </div>
-                <div class="exam-countdown" id="countdown-${exam.id}" style="flex: 3; display: flex; justify-content: center;">
+                <div class="exam-countdown" id="countdown-${exam.id}">
                     <div class="time-box"><span>--</span><small>Gün</small></div>
                     <div class="time-box"><span>--</span><small>Saat</small></div>
                     <div class="time-box"><span>--</span><small>Dk</small></div>
                     <div class="time-box"><span>--</span><small>Sn</small></div>
                 </div>
-                <div class="task-buttons" style="flex: 1; display:flex; gap:5px; justify-content: flex-end;">
+                <div class="task-buttons">
                     <button class="edit-btn" onclick="editExam(${exam.id}, '${exam.title.replace(/'/g, "\\'")}', '${exam.examDate}')" title="Düzenle">✏️</button>
                     <button class="delete-btn" onclick="deleteExam(${exam.id})" title="Sil">✕</button>
                 </div>
@@ -542,17 +542,16 @@ async function loadStudySessions() {
         if (durationHtml === "") durationHtml = `0 Dk`;
 
         li.innerHTML = `
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                <div style="flex: 2; text-align: left;">
-                    <strong>${session.subject}</strong>${topicHtml}
+            <div class="session-item">
+                <div class="session-info">
+                    <span class="session-subject">${session.subject}</span>
+                    ${session.topic ? `<span class="session-topic">${session.topic}</span>` : ''}
                 </div>
-                <div style="flex: 1; text-align: center;">
-                    <span class="session-duration" style="font-weight: 600;">${durationHtml.trim()}</span>
+                <div class="session-stats">
+                    <span class="session-duration">${durationHtml.trim()}</span>
+                    <span class="session-date">${new Date(session.createdAt).toLocaleDateString('tr-TR')}</span>
                 </div>
-                <div style="flex: 1; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
-                    <span style="color: #6b7280; font-size: 14px;">${new Date(session.createdAt).toLocaleDateString('tr-TR')}</span>
-                    <button class="delete-btn" onclick="deleteStudySession(${session.id})" title="Sil">✕</button>
-                </div>
+                <button class="delete-btn" onclick="deleteStudySession(${session.id})" title="Sil">✕</button>
             </div>
         `;
         studyList.appendChild(li);
@@ -766,15 +765,20 @@ async function loadCourses() {
         const finLabel = level === "uni" ? "Final" : "2.Sınav";
 
         li.innerHTML = `
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                <div style="display: flex; flex-direction: column; flex: 3;">
-                    <span style="font-weight: 600;">${displayName} <small style="color:#6b7280;">(${course.credits} ${creditsLabel})</small></span>
-                    <small style="color: #6b7280;">${midLabel}: ${course.midterm} | ${finLabel}: ${course.final} | Ort: ${course.average}</small>
+            <div class="course-item">
+                <div class="course-info">
+                    <span class="course-name">${displayName}</span>
+                    <span class="course-credits">${course.credits} ${creditsLabel}</span>
                 </div>
-                <div style="background: ${gradeColor}; color: white; padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 18px; text-align: center; margin-right: 15px;">
+                <div class="course-grades">
+                    <span class="grade-pill">${midLabel}: ${course.midterm}</span>
+                    <span class="grade-pill">${finLabel}: ${course.final}</span>
+                    <span class="grade-pill avg">Ort: ${course.average}</span>
+                </div>
+                <div class="course-letter" style="background: ${gradeColor};">
                     ${course.letterGrade}
                 </div>
-                <div class="task-buttons" style="display:flex; gap:5px; flex: 1; justify-content: flex-end;">
+                <div class="task-buttons">
                     <button class="edit-btn" onclick="editCourse(${course.id}, '${displayName}', ${course.credits}, ${course.midterm}, ${course.final})" title="Düzenle">✏️</button>
                     <button class="delete-btn" onclick="deleteCourse(${course.id})" title="Sil">✕</button>
                 </div>

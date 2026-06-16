@@ -351,7 +351,8 @@ button:hover {
     }
 
     #welcomeText {
-        display: none;
+        font-size: 11px;
+        margin-top: 1px;
     }
 
     .timer-display {
@@ -439,9 +440,21 @@ button:hover {
     background: #1f2937;
 }
 
+.header-titles {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 #welcomeText {
-    margin-right: 15px;
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.dark-mode #welcomeText {
+    color: #9ca3af;
 }
 
 /* Quote Styles */
@@ -609,16 +622,20 @@ button:hover {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    gap: 15px;
 }
 
 .exam-info {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    flex: 2;
 }
 
 .exam-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 17px;
+    font-weight: 600;
     color: #111827;
 }
 
@@ -627,14 +644,16 @@ button:hover {
 }
 
 .exam-date {
-    font-size: 13px;
+    font-size: 12px;
     color: #6b7280;
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
 .exam-countdown {
     display: flex;
     gap: 6px;
+    flex: 3;
+    justify-content: center;
 }
 
 .time-box {
@@ -653,11 +672,12 @@ button:hover {
     font-size: 16px;
     font-weight: bold;
     line-height: 1.2;
+    color: white !important;
 }
 
 .time-box small {
     font-size: 10px;
-    color: #9ca3af;
+    color: #9ca3af !important;
     margin-top: 2px;
     text-transform: uppercase;
     font-weight: 600;
@@ -667,19 +687,191 @@ button:hover {
     background: #4f46e5;
 }
 
+/* Study Session List Styles */
+.session-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.session-info {
+    display: flex;
+    flex-direction: column;
+    flex: 2.5;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.session-subject {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.dark-mode .session-subject {
+    color: #f9fafb;
+}
+
+.session-topic {
+    font-size: 11px;
+    color: #4f46e5;
+    margin-top: 4px;
+    background: rgba(79, 70, 229, 0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: 500;
+}
+
+.dark-mode .session-topic {
+    color: #a5b4fc;
+    background: rgba(165, 180, 252, 0.12);
+}
+
+.session-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    flex: 1.5;
+    gap: 2px;
+}
+
+.session-duration {
+    font-size: 14px;
+    font-weight: 700;
+    color: #10b981;
+}
+
+.dark-mode .session-duration {
+    color: #34d399;
+}
+
+.session-date {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* Course List Styles */
+.course-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.course-info {
+    display: flex;
+    flex-direction: column;
+    flex: 2;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.course-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.dark-mode .course-name {
+    color: #f9fafb;
+}
+
+.course-credits {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.course-grades {
+    display: flex;
+    gap: 6px;
+    flex: 3;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.grade-pill {
+    font-size: 11px;
+    background: #f3f4f6;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.dark-mode .grade-pill {
+    background: #374151;
+    color: #d1d5db;
+}
+
+.grade-pill.avg {
+    background: #e0e7ff;
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+.dark-mode .grade-pill.avg {
+    background: rgba(79, 70, 229, 0.2);
+    color: #a5b4fc;
+}
+
+.course-letter {
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 32px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 @media(max-width: 768px) {
     .exam-item {
         flex-direction: column;
         align-items: flex-start;
-        gap: 15px;
+        gap: 12px;
     }
-}
+    
+    .exam-countdown {
+        justify-content: flex-start;
+        width: 100%;
+    }
 
-/* Study Session Duration Text */
-.session-duration {
-    color: #4f46e5;
-}
+    .course-item {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 10px 12px;
+        align-items: center;
+        width: 100%;
+    }
 
-.dark-mode .session-duration {
-    color: #818cf8;
+    .course-info {
+        grid-column: 1 / 2;
+    }
+
+    .course-letter {
+        grid-column: 2 / 3;
+        justify-self: end;
+    }
+
+    .course-item .task-buttons {
+        grid-column: 3 / 4;
+        justify-self: end;
+        margin-top: 0;
+    }
+
+    .course-grades {
+        grid-column: 1 / 4;
+        justify-content: flex-start;
+    }
+
+    .session-item {
+        gap: 10px;
+    }
 }
