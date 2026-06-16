@@ -168,3 +168,26 @@ body.auth-body {
 .auth-links a:hover {
     border-bottom: 1px solid #ffffff;
 }
+
+@media(max-width: 480px) {
+    .auth-card {
+        padding: 30px 20px;
+        margin: 0 15px;
+        box-sizing: border-box;
+    }
+    
+    .auth-card h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    
+    .auth-btn {
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .auth-card input {
+        padding: 12px 12px 12px 40px;
+        font-size: 15px;
+    }
+}

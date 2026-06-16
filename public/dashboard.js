@@ -352,6 +352,16 @@ function showSection(section) {
         if(profileSec) profileSec.style.display = "block";
         if (title) title.innerText = "Profil";
     }
+
+    // Close sidebar on mobile
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.querySelector(".sidebar-overlay");
+    if (sidebar && sidebar.classList.contains("open")) {
+        sidebar.classList.remove("open");
+    }
+    if (overlay && overlay.classList.contains("show")) {
+        overlay.classList.remove("show");
+    }
 }
 
 const quotes = [
@@ -821,5 +831,16 @@ async function editCourse(id, name, credits, midterm, final) {
         });
         showNotification("Ders güncellendi ✏️");
         loadCourses();
+    }
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.querySelector(".sidebar-overlay");
+    if (sidebar) {
+        sidebar.classList.toggle("open");
+    }
+    if (overlay) {
+        overlay.classList.toggle("show");
     }
 }

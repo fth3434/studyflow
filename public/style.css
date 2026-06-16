@@ -14,6 +14,41 @@ body {
     background: #111827;
     color: white;
     padding: 20px;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.hamburger-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: #111827;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.3s ease;
+}
+
+.dark-mode .hamburger-btn {
+    color: white;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    display: block;
+    opacity: 1;
 }
 
 .sidebar h2 {
@@ -172,8 +207,21 @@ button:hover {
     }
 
     .sidebar {
-        width: 100%;
-        height: auto;
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        width: 250px;
+        box-sizing: border-box;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .hamburger-btn {
+        display: block;
     }
 
     .cards {
@@ -198,6 +246,21 @@ button:hover {
 
     .task-buttons {
         margin-top: 10px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .header > div {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .timer-display {
+        font-size: 60px;
     }
 }
 
