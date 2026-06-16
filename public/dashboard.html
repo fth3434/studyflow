@@ -26,14 +26,15 @@
         </aside>
         <main class="main">
             <div class="header">
-                <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="header-left">
                     <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
                     <h1 id="pageTitle">Ana Sayfa</h1>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="header-right">
                     <span id="welcomeText"></span>
-
-                    <button onclick="toggleTheme()" data-lang="theme_btn">🌙 Tema Değiştir</button>
+                    <button onclick="toggleTheme()" class="theme-toggle-btn" data-lang="theme_btn">
+                        <span class="theme-toggle-icon">🌙</span><span class="theme-toggle-text"> Tema Değiştir</span>
+                    </button>
                 </div>
             </div>
 

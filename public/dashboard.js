@@ -98,9 +98,9 @@ async function loadTasks() {
         li.innerHTML = `
             <span>${task.title}</span>
             <div class="task-buttons">
-                <button onclick="toggleTask(${task.id})" title="Tamamlandı İşaretle">✔</button>
-                <button onclick="editTask(${task.id}, '${task.title.replace(/'/g, "\\'")}')" title="Düzenle">✏️</button>
-                <button onclick="deleteTask(${task.id})" title="Sil">❌</button>
+                <button class="complete-btn" onclick="toggleTask(${task.id})" title="Tamamlandı İşaretle">✔</button>
+                <button class="edit-btn" onclick="editTask(${task.id}, '${task.title.replace(/'/g, "\\'")}')" title="Düzenle">✏️</button>
+                <button class="delete-btn" onclick="deleteTask(${task.id})" title="Sil">✕</button>
             </div>
         `;
         taskList.appendChild(li);
@@ -203,8 +203,8 @@ async function loadExams() {
                     <div class="time-box"><span>--</span><small>Sn</small></div>
                 </div>
                 <div class="task-buttons" style="flex: 1; display:flex; gap:5px; justify-content: flex-end;">
-                    <button onclick="editExam(${exam.id}, '${exam.title.replace(/'/g, "\\'")}', '${exam.examDate}')" title="Düzenle">✏️</button>
-                    <button onclick="deleteExam(${exam.id})" title="Sil">❌</button>
+                    <button class="edit-btn" onclick="editExam(${exam.id}, '${exam.title.replace(/'/g, "\\'")}', '${exam.examDate}')" title="Düzenle">✏️</button>
+                    <button class="delete-btn" onclick="deleteExam(${exam.id})" title="Sil">✕</button>
                 </div>
             </div>
         `;
@@ -551,7 +551,7 @@ async function loadStudySessions() {
                 </div>
                 <div style="flex: 1; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
                     <span style="color: #6b7280; font-size: 14px;">${new Date(session.createdAt).toLocaleDateString('tr-TR')}</span>
-                    <button onclick="deleteStudySession(${session.id})" style="background: none; border: none; cursor: pointer; color: #ef4444; padding: 5px;" title="Sil">❌</button>
+                    <button class="delete-btn" onclick="deleteStudySession(${session.id})" title="Sil">✕</button>
                 </div>
             </div>
         `;
@@ -775,8 +775,8 @@ async function loadCourses() {
                     ${course.letterGrade}
                 </div>
                 <div class="task-buttons" style="display:flex; gap:5px; flex: 1; justify-content: flex-end;">
-                    <button onclick="editCourse(${course.id}, '${displayName}', ${course.credits}, ${course.midterm}, ${course.final})" title="Düzenle">✏️</button>
-                    <button onclick="deleteCourse(${course.id})" title="Sil">❌</button>
+                    <button class="edit-btn" onclick="editCourse(${course.id}, '${displayName}', ${course.credits}, ${course.midterm}, ${course.final})" title="Düzenle">✏️</button>
+                    <button class="delete-btn" onclick="deleteCourse(${course.id})" title="Sil">✕</button>
                 </div>
             </div>
         `;
