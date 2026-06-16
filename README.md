@@ -35,6 +35,11 @@ Yaklaşan sınavlarınız için gün, ay, yıl, saat ve dakika seçerek kayıt o
 *   Tasarım bütünüyle Modern CSS, Flexbox ve Glassmorphism esintileriyle kodlanmıştır.
 *   **İnce Düşünce:** Dark mod açıkken okunamayacak koyu renkli metinler (örneğin çalışma saatleri metni), karanlık moda geçildiğinde otomatik olarak "fosforlu lila/mavi" (#818cf8) tonlarına dönüşerek göz yormadan maksimum okunabilirlik sağlar.
 
+### 7. Kusursuz Mobil Deneyim (Responsive UI) 📱
+*   Tüm sayfalar (Açılış, Giriş, Kayıt ve Dashboard) mobil cihazların ekran boyutlarına tam uyumludur.
+*   **Akıllı Hamburger Menü:** Dar ekranlarda sol menü (sidebar) otomatik olarak gizlenir. Şık bir menü butonu (☰) ile ekranı karartarak (overlay) soldan kayarak açılır (sliding drawer). Kullanıcı menüden bir seçenek seçtiğinde akıllıca geri kapanır.
+*   **Esnek Grid Yapısı:** Tüm veri kartları ve Pomodoro zamanlayıcı metinleri, kullanıcının cihazına (Tablet, Telefon vb.) göre otomatik yeniden boyutlanır. Kırılma ve taşmalar engellenmiştir.
+
 ---
 
 ## 🛠️ Mimari ve Kullanılan Teknolojiler
@@ -70,8 +75,9 @@ studyflow/
 
 ## ⚙️ Kurulum ve Çalıştırma
 
-Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları izleyebilirsiniz:
+Proje hem **Vercel** gibi sunucusuz (serverless) ortamlarda barındırılmaya hem de kendi yerel bilgisayarınızda (localhost) çalıştırılmaya uygundur.
 
+### Yerel Ortamda (Localhost) Çalıştırma
 1.  **Depoyu Klonlayın:**
     \`\`\`bash
     git clone https://github.com/kullaniciadiniz/studyflow.git
